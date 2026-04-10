@@ -2,8 +2,7 @@
   "name": "quickmd",
   "private": true,
   "version": "0.2.1",
-  "type": "module",
-  "main": "dist-electron/main/index.cjs",
+  "main": "dist-electron/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",

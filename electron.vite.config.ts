@@ -5,7 +5,7 @@ export default defineConfig({
   main: {
     build: {
       outDir: 'dist-electron/main',
-      lib: {
+lib: {
         entry: 'electron/main/index.ts',
       },
     },
