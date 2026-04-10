@@ -11,21 +11,21 @@ Replace the Rust/Tauri backend with a pure Node.js/Electron backend. Keep the Re
 
 ## Architecture
 
-Three-process Electron model with contextIsolation enabled (secure by default):
+Three-process Electron model with `contextIsolation: true`, `nodeIntegration: false`:
 
 ```
 ┌─────────────────────────────────┐
 │ Main Process (Node.js)          │
 │ electron/main/index.ts          │
 │ - BrowserWindow lifecycle       │
-│ - ipcMain handlers (fs, dialog) │
+│ - ipcMain.handle() for all ops  │
 └────────────┬────────────────────┘
-             │ IPC (ipcMain / ipcRenderer)
+             │ IPC channels (all hyphenated)
 ┌────────────▼────────────────────┐
 │ Preload Script                  │
 │ electron/preload/index.ts       │
 │ - contextBridge.exposeInMainWorld│
-│ - exposes window.api            │
+│ - exposes typed window.api      │
 └────────────┬────────────────────┘
              │ window.api.*
 ┌────────────▼────────────────────┐
@@ -48,14 +48,15 @@ quickmd/
 │       └── index.ts            # contextBridge → window.api
 ├── src/
 │   ├── native.ts               # NEW: replaces tauri.ts, same interface
+│   ├── global.d.ts             # NEW: window.api TypeScript declaration
 │   ├── components/
 │   │   └── Toolbar.tsx         # CHANGE: dialogs via window.api
-│   ├── store/useStore.ts       # CHANGE: import from native not tauri
+│   ├── store/useStore.ts       # CHANGE: import from ./native
 │   └── ...rest untouched
-├── docs/superpowers/specs/     # This file
 ├── electron.vite.config.ts     # REPLACES vite.config.ts
+├── tsconfig.electron.json      # NEW: Node.js types for electron/ source
 ├── Justfile                    # NEW: task runner
-├── package.json                # UPDATED: swap tauri deps for electron deps
+├── package.json                # UPDATED
 └── index.html                  # UNTOUCHED
 ```
 
@@ -63,35 +64,218 @@ quickmd/
 
 ---
 
+## Types
+
+### `FileEntry` (shared shape)
+
+```ts
+interface FileEntry {
+  name: string;       // filename only (e.g. "notes.md")
+  path: string;       // absolute path
+  is_dir: boolean;    // underscore form — matches current Tauri struct, Sidebar.tsx uses this field
+}
+```
+
+---
+
 ## IPC Design
 
-### Main process handlers (`electron/main/index.ts`)
+### Channel naming convention
 
-| Channel | Handler | Node.js API |
+All channels use hyphen-only naming (no colons):
+
+| Channel | Signature | Implementation |
 |---|---|---|
-| `read-file` | `(path) → string` | `fs.promises.readFile(path, 'utf-8')` |
-| `write-file` | `(path, content)` | `fs.promises.writeFile(path, content, 'utf-8')` |
-| `list-directory` | `(path) → FileEntry[]` | `fs.promises.readdir` + `stat`, sorted dirs-first |
+| `read-file` | `(path: string) → string` | `fs.promises.readFile(path, 'utf-8')` |
+| `write-file` | `(path: string, content: string) → void` | `fs.promises.writeFile(path, content, 'utf-8')` |
+| `list-directory` | `(path: string) → FileEntry[]` | `fs.promises.readdir` + per-entry `stat`; skip entries where stat throws |
 | `get-home-dir` | `() → string` | `os.homedir()` |
-| `dialog:open-file` | `() → string \| null` | `dialog.showOpenDialog` (.md, .markdown filter) |
-| `dialog:save-file` | `() → string \| null` | `dialog.showSaveDialog` (.md filter) |
+| `open-file-dialog` | `() → string \| null` | `dialog.showOpenDialog(win, ...)` |
+| `save-file-dialog` | `(defaultPath?: string) → string \| null` | `dialog.showSaveDialog(win, { defaultPath, ... })` |
+
+`save-file-dialog` accepts an optional `defaultPath` so the dialog pre-fills the suggested filename when saving a new file. `open-file-dialog` and `save-file-dialog` receive `win` as the first arg to `dialog.*` for proper modal attachment on macOS.
+
+For `list-directory`: entries where `stat` throws (e.g. broken symlinks) are silently skipped — consistent with current Tauri behavior.
+
+### Main process (`electron/main/index.ts`)
+
+```ts
+import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import * as fs from 'fs'
+import * as os from 'os'
+import * as path from 'path'
+
+let win: BrowserWindow
+
+function createWindow() {
+  win = new BrowserWindow({
+    width: 1200,
+    height: 800,
+    title: 'QuickMD',
+    webPreferences: {
+      preload: path.join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  })
+
+  if (process.env['ELECTRON_RENDERER_URL']) {
+    win.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else {
+    win.loadFile(path.join(__dirname, '../renderer/index.html'))
+  }
+}
+
+app.whenReady().then(() => {
+  createWindow()
+  // macOS: re-create window on dock icon click if none open
+  app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
+})
+
+// Quit on all windows closed (except macOS)
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit()
+})
+
+// IPC handlers
+ipcMain.handle('read-file', (_e, path: string) =>
+  fs.promises.readFile(path, 'utf-8'))
+
+ipcMain.handle('write-file', (_e, filePath: string, content: string) =>
+  fs.promises.writeFile(filePath, content, 'utf-8'))
+
+ipcMain.handle('list-directory', async (_e, dirPath: string) => {
+  const entries = await fs.promises.readdir(dirPath)
+  const result: FileEntry[] = []
+  for (const name of entries) {
+    const fullPath = path.join(dirPath, name)
+    try {
+      const stat = await fs.promises.stat(fullPath)
+      result.push({ name, path: fullPath, is_dir: stat.isDirectory() })
+    } catch {
+      // skip unreadable entries (broken symlinks, permission errors)
+    }
+  }
+  return result.sort((a, b) => {
+    if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+  })
+})
+
+ipcMain.handle('get-home-dir', () => os.homedir())
+
+ipcMain.handle('open-file-dialog', () =>
+  dialog.showOpenDialog(win, {
+    filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
+    properties: ['openFile'],
+  }).then(r => r.canceled ? null : r.filePaths[0]))
+
+ipcMain.handle('save-file-dialog', (_e, defaultPath?: string) =>
+  dialog.showSaveDialog(win, {
+    defaultPath,
+    filters: [{ name: 'Markdown', extensions: ['md'] }],
+  }).then(r => r.canceled ? null : r.filePath))
+```
 
 ### Preload (`electron/preload/index.ts`)
 
 ```ts
+import { contextBridge, ipcRenderer } from 'electron'
+
 contextBridge.exposeInMainWorld('api', {
-  readFile: (path: string) => ipcRenderer.invoke('read-file', path),
-  writeFile: (path: string, content: string) => ipcRenderer.invoke('write-file', path, content),
-  listDirectory: (path: string) => ipcRenderer.invoke('list-directory', path),
-  getHomeDir: () => ipcRenderer.invoke('get-home-dir'),
-  openFileDialog: () => ipcRenderer.invoke('dialog:open-file'),
-  saveFileDialog: () => ipcRenderer.invoke('dialog:save-file'),
+  readFile: (path: string): Promise<string> =>
+    ipcRenderer.invoke('read-file', path),
+
+  writeFile: (path: string, content: string): Promise<void> =>
+    ipcRenderer.invoke('write-file', path, content),
+
+  listDirectory: (path: string): Promise<FileEntry[]> =>
+    ipcRenderer.invoke('list-directory', path),
+
+  getHomeDir: (): Promise<string> =>
+    ipcRenderer.invoke('get-home-dir'),
+
+  openFileDialog: (): Promise<string | null> =>
+    ipcRenderer.invoke('open-file-dialog'),
+
+  saveFileDialog: (defaultPath?: string): Promise<string | null> =>
+    ipcRenderer.invoke('save-file-dialog', defaultPath),
 })
+```
+
+### TypeScript global declaration (`src/global.d.ts`)
+
+```ts
+interface FileEntry {
+  name: string
+  path: string
+  is_dir: boolean
+}
+
+interface ElectronAPI {
+  readFile(path: string): Promise<string>
+  writeFile(path: string, content: string): Promise<void>
+  listDirectory(path: string): Promise<FileEntry[]>
+  getHomeDir(): Promise<string>
+  openFileDialog(): Promise<string | null>
+  saveFileDialog(defaultPath?: string): Promise<string | null>
+}
+
+declare interface Window {
+  api: ElectronAPI
+}
 ```
 
 ### Renderer (`src/native.ts`)
 
-Same exported function signatures as current `src/tauri.ts`. Calls `window.api.*`. No other files change except `Toolbar.tsx` (dialogs) and `useStore.ts` (import path).
+Same exported function signatures as current `src/tauri.ts`, plus `FileEntry` re-export. Calls `window.api.*`.
+
+`saveFileAs` flow: `useStore.ts`'s `saveFileAs(path)` action calls `window.api.writeFile(path, content)` directly (path already resolved by caller). `Toolbar.tsx` calls `window.api.saveFileDialog(currentFilePath ?? undefined)` to get the path first, then passes it to `saveFileAs`. No behavioral change from current Tauri flow.
+
+---
+
+## Build Config (`electron.vite.config.ts`)
+
+```ts
+import { defineConfig } from 'electron-vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  main: {
+    entry: 'electron/main/index.ts',
+    build: { outDir: 'dist-electron/main' },
+  },
+  preload: {
+    input: 'electron/preload/index.ts',
+    build: { outDir: 'dist-electron/preload' },
+  },
+  renderer: {
+    plugins: [react()],
+    build: { outDir: 'dist-electron/renderer' },
+  },
+})
+```
+
+---
+
+## TypeScript Config for Electron Source (`tsconfig.electron.json`)
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "target": "ES2020",
+    "lib": ["ES2020"],
+    "types": ["node", "electron"]
+  },
+  "include": ["electron/**/*"]
+}
+```
+
+The base `tsconfig.json` (browser types, ESM) covers `src/`. `tsconfig.electron.json` covers `electron/` with Node.js types. electron-vite picks up both via its own config resolution.
 
 ---
 
@@ -105,17 +289,7 @@ Same exported function signatures as current `src/tauri.ts`. Calls `window.api.*
 ### Add
 - `electron` (devDep, latest stable)
 - `electron-vite` (devDep)
-- `electron-builder` (devDep, for packaging)
-
----
-
-## Build Config
-
-`electron.vite.config.ts` defines three Vite entry points:
-
-- **main** → `electron/main/index.ts` (CommonJS output)
-- **preload** → `electron/preload/index.ts` (CommonJS output)
-- **renderer** → `src/` (ESM, same Vite/React config as today)
+- `electron-builder` (devDep)
 
 ---
 
@@ -138,38 +312,37 @@ Same exported function signatures as current `src/tauri.ts`. Calls `window.api.*
 
 ## Justfile
 
+Recipe names use hyphens (colons are invalid in `just` recipe names). Recipes call `npm run` with the colon-form script names from `package.json`.
+
 ```just
-# Dev
+# Dev — opens Electron window with hot-reload
 dev:
     npm run dev
 
-# Build renderer + main + preload
+# Build main + preload + renderer
 build:
     npm run build
 
-# Preview built app
+# Preview production build
 preview:
     npm run preview
 
-# Package into installers
+# Package into platform installers
 package:
     npm run package
 
-# Linting
 lint:
     npm run lint
 
 lint-fix:
-    npm run lint-fix
+    npm run lint:fix
 
-# Formatting
 format:
     npm run format
 
 format-check:
-    npm run format-check
+    npm run format:check
 
-# Install dependencies
 install:
     npm ci
 ```
@@ -178,24 +351,24 @@ install:
 
 ## What Does NOT Change
 
-- `src/components/Editor.tsx` — CodeMirror 6 setup
-- `src/components/Preview.tsx` — marked.js rendering
-- `src/components/EditorContainer.tsx`, `Sidebar.tsx`, `Divider.tsx`
-- `src/store/useStore.ts` — only the import path changes (`../native`)
+- `src/components/Editor.tsx`, `Preview.tsx`, `EditorContainer.tsx`, `Sidebar.tsx`, `Divider.tsx`
+- `src/store/useStore.ts` — import path changes from `../tauri` to `./native` only
 - `src/hooks/useKeyboardShortcuts.ts`
 - `src/App.tsx`, `src/App.css`
 - `index.html`
-- `tsconfig.json`, `.prettierrc`, `eslint.config.js`
+- `.prettierrc`, `eslint.config.js`
+- `tsconfig.json` (base, browser-scoped — unchanged)
 
 ---
 
 ## CI/CD (Secondary — Post-Local-Verification)
 
-Existing `.github/workflows/release-please.yml` build job changes:
+Existing `.github/workflows/release-please.yml` changes needed:
 - Remove Rust toolchain setup step
-- Remove Linux webkit/appindicator deps (no longer needed)
+- Remove Linux webkit/appindicator apt deps
 - Replace `npm run tauri build` with `just build && just package`
-- Update artifact paths to electron-builder output dirs
+- Update artifact paths to electron-builder output (`dist/`)
+- `release-please-config.json` currently tracks `Cargo.toml` version — update to track `package.json`
 
 ---
 
@@ -203,14 +376,15 @@ Existing `.github/workflows/release-please.yml` build job changes:
 
 ```bash
 git checkout -b feat/electron-migration
-npm install        # or: just install
+just install       # npm ci
 just dev           # Electron window opens with hot-reload
 just build         # Production build
-just package       # Build installers (secondary)
+just package       # Build installers (deferred, secondary)
 ```
 
 ---
 
 ## Open Questions
 
-None — scope is fully defined. CI/CD workflow update is explicitly deferred until local build is verified.
+1. **electron-builder config** — `productName`, `appId`, output formats (dmg/AppImage/nsis) needed for `just package`. Defined at impl time; not required for `just dev` or `just build`.
+2. **@types/electron** — electron-vite may bundle these; confirm at impl time whether explicit `@types/electron` devDep is needed.
