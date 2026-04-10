@@ -1,3 +1,4 @@
+import React from 'react';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { useStore, ViewMode } from '../store';
 

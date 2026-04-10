@@ -13,10 +13,6 @@ export function Sidebar() {
   const [subEntries, setSubEntries] = useState<{ [path: string]: FileEntry[] }>({});
   const { openFile, currentFilePath, sidebarVisible } = useStore();
 
-  useEffect(() => {
-    getHomeDir().then(loadDirectory).catch(console.error);
-  }, []);
-
   const loadDirectory = async (path: string) => {
     try {
       const files = await listDirectory(path);
@@ -26,6 +22,10 @@ export function Sidebar() {
       console.error('Failed to load directory:', e);
     }
   };
+
+  useEffect(() => {
+    getHomeDir().then(loadDirectory).catch(console.error);
+  }, []);
 
   const toggleFolder = async (path: string) => {
     if (expanded[path]) {
