@@ -1,16 +1,12 @@
 name: Release Please
 
-# Disabled: build job references src-tauri which was removed in the Electron migration.
-# Re-enable and update once release pipeline is rewritten for Electron.
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
   pull-requests: write
-
-env:
-  CARGO_TERM_COLOR: always
 
 jobs:
   release-please:
@@ -36,80 +32,52 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            target: aarch64-apple-darwin
-            name: macOS Apple Silicon
-            artifact-prefix: macOS_Apple-Silicon
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            name: macOS Intel
-            artifact-prefix: macOS_Intel
+            name: macOS Universal
+            artifact-prefix: macOS_Universal
+            args: --mac --universal
           - os: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
             name: Linux x86_64
             artifact-prefix: Linux_x86_64
+            args: --linux
           - os: windows-latest
-            target: x86_64-pc-windows-msvc
             name: Windows x64
             artifact-prefix: Windows_x64
+            args: --win
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Install macOS dependencies
-        if: runner.os == 'macOS'
-        run: brew install create-dmg
-
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Tauri app
-        run: npm run tauri build -- --target ${{ matrix.target }}
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - name: Build & package
+        run: npx electron-vite build && npx electron-builder ${{ matrix.args }}
 
       - name: Stage artifacts (macOS)
         if: runner.os == 'macOS'
         run: |
           mkdir -p artifacts
-          cp src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg \
-            "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}.dmg"
+          cp dist/*.dmg "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}.dmg"
 
       - name: Stage artifacts (Linux)
         if: runner.os == 'Linux'
         run: |
           mkdir -p artifacts
-          cp src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage \
-            "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}.AppImage"
-          cp src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb \
-            "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}.deb"
+          cp dist/*.AppImage "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}.AppImage"
+          cp dist/*.deb "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}.deb"
 
       - name: Stage artifacts (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path artifacts
-          Copy-Item src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*-setup.exe `
-            "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}_Setup.exe"
-          Copy-Item src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi `
-            "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}.msi"
+          Copy-Item dist\*.exe "artifacts\QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}_Setup.exe"
 
       - name: Upload to release
         run: gh release upload ${{ needs.release-please.outputs.tag_name }} artifacts/* --clobber
