@@ -1,7 +1,7 @@
 {
   "name": "quickmd",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Cross-platform markdown editor with real-time preview",
   "author": "MoHo Khaleqi",
   "main": "dist-electron/main/index.js",

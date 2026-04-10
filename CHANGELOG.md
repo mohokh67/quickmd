@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/mohokh67/quickmd/compare/quickmd-v0.3.0...quickmd-v0.3.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* add missing author and description to package.json ([dd69d49](https://github.com/mohokh67/quickmd/commit/dd69d49554ac9f71ebb8585ade3d8d8ab0261f20))
+* add missing author and description to package.json ([60a1ef9](https://github.com/mohokh67/quickmd/commit/60a1ef972e9a260300ea0b25e896fa7ead08702f))
+
 ## [0.3.0](https://github.com/mohokh67/quickmd/compare/quickmd-v0.2.1...quickmd-v0.3.0) (2026-04-10)
 
 
