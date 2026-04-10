@@ -68,7 +68,10 @@ export function Toolbar() {
         Files
       </button>
 
-      <span style={{ fontWeight: 'bold' }}>QuickMD <span style={{ fontWeight: 'normal', fontSize: '0.75rem', color: '#888' }}>v{version}</span></span>
+      <span style={{ fontWeight: 'bold' }}>
+        QuickMD{' '}
+        <span style={{ fontWeight: 'normal', fontSize: '0.75rem', color: '#888' }}>v{version}</span>
+      </span>
       <span style={{ color: '#666' }}>
         {fileName}
         {isDirty ? ' *' : ''}

@@ -20,16 +20,18 @@ export function Sidebar() {
   };
 
   useEffect(() => {
-    storeGet('workspace.lastFolder').then(async (stored) => {
-      const folder = stored as string | null;
-      if (!folder) return;
-      try {
-        await loadDirectory(folder);
-      } catch {
-        // path no longer exists — clear stored value and show empty state
-        await storeSet('workspace.lastFolder', null);
-      }
-    }).catch(console.error);
+    storeGet('workspace.lastFolder')
+      .then(async (stored) => {
+        const folder = stored as string | null;
+        if (!folder) return;
+        try {
+          await loadDirectory(folder);
+        } catch {
+          // path no longer exists — clear stored value and show empty state
+          await storeSet('workspace.lastFolder', null);
+        }
+      })
+      .catch(console.error);
   }, []);
 
   const handleOpenFolder = async () => {
@@ -124,9 +126,7 @@ export function Sidebar() {
           gap: '0.25rem',
         }}
       >
-        <span
-          style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-        >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {rootPath ? rootPath.split('/').pop() : 'No Folder'}
         </span>
         <button
