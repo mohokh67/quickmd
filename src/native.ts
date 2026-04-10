@@ -19,3 +19,11 @@ export async function listDirectory(path: string): Promise<FileEntry[]> {
 export async function getHomeDir(): Promise<string> {
   return window.api.getHomeDir()
 }
+
+export async function storeGet(key: string): Promise<unknown> {
+  return window.api.storeGet(key)
+}
+
+export async function storeSet(key: string, value: unknown): Promise<void> {
+  return window.api.storeSet(key, value)
+}

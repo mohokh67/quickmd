@@ -9,7 +9,14 @@ interface FileEntry {
   is_dir: boolean
 }
 
+interface StoreSchema {
+  workspace: { lastFolder: string | null }
+  ui: { theme: 'light' | 'dark' }
+}
+
 let win: BrowserWindow
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let store: any
 
 function createWindow() {
   win = new BrowserWindow({
@@ -30,7 +37,15 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
+  const { default: ElectronStore } = await import('electron-store')
+  store = new ElectronStore<StoreSchema>({
+    defaults: {
+      workspace: { lastFolder: null },
+      ui: { theme: 'light' },
+    },
+  })
+
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -85,3 +100,7 @@ ipcMain.handle('save-file-dialog', async (_event, defaultPath?: string): Promise
   })
   return result.canceled ? null : (result.filePath ?? null)
 })
+
+ipcMain.handle('store-get', (_event, key: string) => store.get(key))
+
+ipcMain.handle('store-set', (_event, key: string, value: unknown): void => store.set(key, value))

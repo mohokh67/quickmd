@@ -24,4 +24,10 @@ contextBridge.exposeInMainWorld('api', {
 
   saveFileDialog: (defaultPath?: string): Promise<string | null> =>
     ipcRenderer.invoke('save-file-dialog', defaultPath),
+
+  storeGet: (key: string): Promise<unknown> =>
+    ipcRenderer.invoke('store-get', key),
+
+  storeSet: (key: string, value: unknown): Promise<void> =>
+    ipcRenderer.invoke('store-set', key, value),
 })

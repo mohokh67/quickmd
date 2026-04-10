@@ -11,6 +11,8 @@ interface ElectronAPI {
   getHomeDir(): Promise<string>
   openFileDialog(): Promise<string | null>
   saveFileDialog(defaultPath?: string): Promise<string | null>
+  storeGet(key: string): Promise<unknown>
+  storeSet(key: string, value: unknown): Promise<void>
 }
 
 declare interface Window {
