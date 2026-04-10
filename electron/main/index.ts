@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 import * as fs from 'fs/promises'
 import * as os from 'os'
 import * as path from 'path'
@@ -70,6 +70,18 @@ ipcMain.handle('list-directory', async (_event, dirPath: string): Promise<FileEn
 
 ipcMain.handle('get-home-dir', (): string => os.homedir())
 
-// Stubs — implemented in issue #12
-ipcMain.handle('open-file-dialog', () => { throw new Error('not implemented') })
-ipcMain.handle('save-file-dialog', () => { throw new Error('not implemented') })
+ipcMain.handle('open-file-dialog', async (): Promise<string | null> => {
+  const result = await dialog.showOpenDialog(win, {
+    properties: ['openFile'],
+    filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
+  })
+  return result.canceled ? null : result.filePaths[0]
+})
+
+ipcMain.handle('save-file-dialog', async (_event, defaultPath?: string): Promise<string | null> => {
+  const result = await dialog.showSaveDialog(win, {
+    defaultPath,
+    filters: [{ name: 'Markdown', extensions: ['md'] }],
+  })
+  return result.canceled ? null : (result.filePath ?? null)
+})
