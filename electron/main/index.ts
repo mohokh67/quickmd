@@ -1,5 +1,13 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
+import * as fs from 'fs/promises'
+import * as os from 'os'
 import * as path from 'path'
+
+interface FileEntry {
+  name: string
+  path: string
+  is_dir: boolean
+}
 
 let win: BrowserWindow
 
@@ -33,10 +41,35 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()
 })
 
-// Stubs — implemented in issue #11
-ipcMain.handle('read-file', () => { throw new Error('not implemented') })
-ipcMain.handle('write-file', () => { throw new Error('not implemented') })
-ipcMain.handle('list-directory', () => { throw new Error('not implemented') })
-ipcMain.handle('get-home-dir', () => { throw new Error('not implemented') })
+ipcMain.handle('read-file', (_event, filePath: string): Promise<string> =>
+  fs.readFile(filePath, 'utf-8')
+)
+
+ipcMain.handle('write-file', (_event, filePath: string, content: string): Promise<void> =>
+  fs.writeFile(filePath, content, 'utf-8')
+)
+
+ipcMain.handle('list-directory', async (_event, dirPath: string): Promise<FileEntry[]> => {
+  const entries = await fs.readdir(dirPath, { withFileTypes: true })
+  const result: FileEntry[] = []
+  for (const entry of entries) {
+    try {
+      const entryPath = path.join(dirPath, entry.name)
+      const stat = await fs.stat(entryPath)
+      result.push({ name: entry.name, path: entryPath, is_dir: stat.isDirectory() })
+    } catch {
+      // skip unreadable entries / broken symlinks
+    }
+  }
+  result.sort((a, b) => {
+    if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1
+    return a.name.toLowerCase().localeCompare(b.name.toLowerCase())
+  })
+  return result
+})
+
+ipcMain.handle('get-home-dir', (): string => os.homedir())
+
+// Stubs — implemented in issue #12
 ipcMain.handle('open-file-dialog', () => { throw new Error('not implemented') })
 ipcMain.handle('save-file-dialog', () => { throw new Error('not implemented') })

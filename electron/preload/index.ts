@@ -1,5 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+interface FileEntry {
+  name: string
+  path: string
+  is_dir: boolean
+}
+
 contextBridge.exposeInMainWorld('api', {
   readFile: (filePath: string): Promise<string> =>
     ipcRenderer.invoke('read-file', filePath),
