@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { open, save } from '@tauri-apps/plugin-dialog';
 import { useStore } from '../store';
 
 export function useKeyboardShortcuts() {
@@ -24,17 +23,15 @@ export function useKeyboardShortcuts() {
         if (currentFilePath) {
           await saveFile();
         } else {
-          const path = await save({ filters: [{ name: 'Markdown', extensions: ['md'] }] });
+          const path = await window.api.saveFileDialog();
           if (path) await saveFileAs(path);
         }
       }
 
       if (isMod && e.key === 'o') {
         e.preventDefault();
-        const path = await open({
-          filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
-        });
-        if (path && typeof path === 'string') await openFile(path);
+        const path = await window.api.openFileDialog();
+        if (path) await openFile(path);
       }
 
       if (isMod && e.key === 'b') {

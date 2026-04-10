@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { listDirectory, getHomeDir, FileEntry } from '../tauri';
+import { listDirectory, getHomeDir, FileEntry } from '../native';
 import { useStore } from '../store';
 
 interface FolderState {

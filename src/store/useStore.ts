@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { readFile, writeFile } from '../tauri';
+import { readFile, writeFile } from '../native';
 
 export type ViewMode = 'editor' | 'preview' | 'split';
 export type Theme = 'light' | 'dark';

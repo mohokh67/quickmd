@@ -1,5 +1,4 @@
 import React from 'react';
-import { open, save } from '@tauri-apps/plugin-dialog';
 import { useStore, ViewMode } from '../store';
 
 const buttonStyle: React.CSSProperties = {
@@ -30,12 +29,8 @@ export function Toolbar() {
   const fileName = currentFilePath ? currentFilePath.split('/').pop() : 'Untitled';
 
   const handleOpen = async () => {
-    const path = await open({
-      filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
-    });
-    if (path && typeof path === 'string') {
-      await openFile(path);
-    }
+    const path = await window.api.openFileDialog();
+    if (path) await openFile(path);
   };
 
   const handleSave = async () => {
@@ -47,12 +42,8 @@ export function Toolbar() {
   };
 
   const handleSaveAs = async () => {
-    const path = await save({
-      filters: [{ name: 'Markdown', extensions: ['md'] }],
-    });
-    if (path) {
-      await saveFileAs(path);
-    }
+    const path = await window.api.saveFileDialog(currentFilePath ?? undefined);
+    if (path) await saveFileAs(path);
   };
 
   return (
