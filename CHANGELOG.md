@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/mohokh67/quickmd/compare/quickmd-v0.2.0...quickmd-v0.2.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **ci:** merge build jobs into release-please workflow ([66d97d7](https://github.com/mohokh67/quickmd/commit/66d97d7bad3c53cde46f550ede7301ed51d2629a))
+* **ci:** merge build jobs into release-please workflow ([dac3a51](https://github.com/mohokh67/quickmd/commit/dac3a51d3d7caefd859d4a8a3b2cf90c6917f31b))
+
 ## [0.2.0](https://github.com/mohokh67/quickmd/compare/quickmd-v0.1.0...quickmd-v0.2.0) (2026-04-10)
 
 
