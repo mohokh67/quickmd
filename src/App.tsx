@@ -10,10 +10,12 @@ function App() {
   useKeyboardShortcuts();
 
   useEffect(() => {
-    storeGet('ui.theme').then((stored) => {
-      if (stored === 'light' || stored === 'dark') setTheme(stored);
-    }).catch(console.error);
-  }, []);
+    storeGet('ui.theme')
+      .then((stored) => {
+        if (stored === 'light' || stored === 'dark') setTheme(stored);
+      })
+      .catch(console.error);
+  }, [setTheme]);
 
   return (
     <div className={`app ${theme}`}>

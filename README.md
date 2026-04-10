@@ -2,116 +2,52 @@
 
 A fast, cross-platform markdown editor with real-time preview.
 
-Built with Tauri (Rust) + React + CodeMirror 6.
+Built with Electron (Node.js) + React + CodeMirror 6.
 
 ## Features
 
 - Real-time markdown preview (GFM support)
 - Three view modes: Editor, Preview, Split
 - Resizable split view
-- File browser sidebar
-- Light/dark themes
+- File browser sidebar with persistent workspace folder
+- Light/dark themes (persisted across restarts)
 - Keyboard shortcuts
 - Native file dialogs
 
 ## Prerequisites
 
-### All Platforms
-
 - [Node.js](https://nodejs.org/) 18+
-- [Rust](https://rustup.rs/) 1.70+
 
-### macOS
-
-```bash
-# Install Xcode Command Line Tools
-xcode-select --install
-
-# Install Rust (if not installed)
-brew install rust
-# OR
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-### Windows
-
-1. Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/)
-   - Select "Desktop development with C++"
-2. Install [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (usually pre-installed on Windows 10/11)
-3. Install Rust:
-   ```powershell
-   winget install Rustlang.Rust.MSVC
-   # OR download from https://rustup.rs
-   ```
-
-### Linux (Debian/Ubuntu)
-
-```bash
-# System dependencies
-sudo apt update
-sudo apt install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
-  libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
-
-# Install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source ~/.cargo/env
-```
-
-### Linux (Fedora)
-
-```bash
-sudo dnf install webkit2gtk4.1-devel openssl-devel curl wget file \
-  libxdo-devel librsvg2-devel
-
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source ~/.cargo/env
-```
-
-### Linux (Arch)
-
-```bash
-sudo pacman -S webkit2gtk-4.1 base-devel curl wget file openssl \
-  libxdo librsvg
-
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source ~/.cargo/env
-```
+That's it. No Rust, no platform-specific native dependencies.
 
 ## Installation
 
 ```bash
-# Clone and enter directory
+git clone https://github.com/mohokh67/quickmd.git
 cd quickmd
-
-# Install dependencies
 npm install
-
-# Run in development mode
-npm run tauri dev
+npm run dev
 ```
-
-First run will compile Rust dependencies (2-5 minutes).
 
 ## Development
 
 ```bash
-# Start dev server (hot reload)
-npm run tauri dev
-
-# Build frontend only
-npm run build
-
-# Build distributable app
-npm run tauri build
+npm run dev          # Start Electron app with hot-reload
+npm run build        # Build main + preload + renderer
+npm run package      # Build + package into platform installers
+npm run lint         # ESLint
+npm run format:check # Prettier check
 ```
 
-### Build Output Locations
+A `Justfile` is also included for convenience (`just dev`, `just build`, `just package`, etc.).
+
+### Build Output
 
 | Platform | Location |
 |----------|----------|
-| macOS | `src-tauri/target/release/bundle/dmg/` |
-| Windows | `src-tauri/target/release/bundle/msi/` |
-| Linux | `src-tauri/target/release/bundle/appimage/` |
+| macOS | `dist/*.dmg` |
+| Windows | `dist/*.exe` |
+| Linux | `dist/*.AppImage`, `dist/*.deb` |
 
 ## Usage
 
@@ -134,46 +70,20 @@ npm run tauri build
 
 ### File Browser
 
+- Click "Open Folder" to pick a workspace folder (remembered across restarts)
 - Click folders to expand/collapse
 - Click `.md` files to open
-- Toggle with sidebar button or Cmd/Ctrl+B
-
-## Troubleshooting
-
-### "failed to download from crates.io"
-
-Corporate firewalls may block Rust package downloads. Solutions:
-- Use personal network/hotspot
-- Request IT to allowlist `crates.io` and `static.crates.io`
-
-### "cargo not found"
-
-Rust not installed or not in PATH:
-```bash
-# Check installation
-rustc --version
-
-# If not found, install Rust
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-source ~/.cargo/env
-```
-
-### Linux: "webkit2gtk not found"
-
-Install system dependencies (see Linux prerequisites above).
-
-### Windows: Build fails
-
-Ensure Visual Studio Build Tools are installed with C++ workload.
 
 ## Tech Stack
 
-- [Tauri 2.x](https://tauri.app/) - Native app framework
-- [React 18](https://react.dev/) - UI framework
-- [CodeMirror 6](https://codemirror.net/) - Code editor
-- [Zustand](https://zustand-demo.pmnd.rs/) - State management
-- [marked](https://marked.js.org/) - Markdown parser
-- [Vite](https://vitejs.dev/) - Build tool
+- [Electron](https://www.electronjs.org/) — desktop app framework
+- [electron-vite](https://electron-vite.org/) — build tooling
+- [electron-builder](https://www.electron.build/) — packaging
+- [React 18](https://react.dev/) — UI framework
+- [CodeMirror 6](https://codemirror.net/) — editor
+- [Zustand](https://zustand-demo.pmnd.rs/) — state management
+- [marked](https://marked.js.org/) — markdown parser
+- [electron-store](https://github.com/sindresorhus/electron-store) — settings persistence
 
 ## License
 

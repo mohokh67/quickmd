@@ -44,7 +44,8 @@ export function Editor() {
     return () => {
       view.destroy();
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount-only: recreating the editor on every content change would reset cursor/history
 
   // Sync external content changes
   useEffect(() => {
