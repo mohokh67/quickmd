@@ -1,23 +1,21 @@
-import { invoke } from '@tauri-apps/api/core';
-
 export interface FileEntry {
-  name: string;
-  path: string;
-  is_dir: boolean;
+  name: string
+  path: string
+  is_dir: boolean
 }
 
 export async function readFile(path: string): Promise<string> {
-  return invoke('read_file', { path });
+  return window.api.readFile(path)
 }
 
 export async function writeFile(path: string, content: string): Promise<void> {
-  return invoke('write_file', { path, content });
+  return window.api.writeFile(path, content)
 }
 
 export async function listDirectory(path: string): Promise<FileEntry[]> {
-  return invoke('list_directory', { path });
+  return window.api.listDirectory(path)
 }
 
 export async function getHomeDir(): Promise<string> {
-  return invoke('get_home_dir');
+  return window.api.getHomeDir()
 }
