@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { readFile, writeFile } from '../native';
+import { readFile, writeFile, storeSet } from '../native';
 
 export type ViewMode = 'editor' | 'preview' | 'split';
 export type Theme = 'light' | 'dark';
@@ -43,7 +43,10 @@ export const useStore = create<AppState>((set, get) => ({
   setContent: (content) => set({ content, isDirty: true }),
   setCurrentFile: (path, content) => set({ currentFilePath: path, content, isDirty: false }),
   setViewMode: (viewMode) => set({ viewMode }),
-  setTheme: (theme) => set({ theme }),
+  setTheme: (theme) => {
+    set({ theme });
+    storeSet('ui.theme', theme).catch(console.error);
+  },
   toggleSidebar: () => set((state) => ({ sidebarVisible: !state.sidebarVisible })),
   setSplitRatio: (splitRatio) => set({ splitRatio }),
   markClean: () => set({ isDirty: false }),

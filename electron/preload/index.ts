@@ -30,4 +30,7 @@ contextBridge.exposeInMainWorld('api', {
 
   storeSet: (key: string, value: unknown): Promise<void> =>
     ipcRenderer.invoke('store-set', key, value),
+
+  openFolderDialog: (): Promise<string | null> =>
+    ipcRenderer.invoke('open-folder-dialog'),
 })

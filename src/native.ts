@@ -27,3 +27,7 @@ export async function storeGet(key: string): Promise<unknown> {
 export async function storeSet(key: string, value: unknown): Promise<void> {
   return window.api.storeSet(key, value)
 }
+
+export async function openFolderDialog(): Promise<string | null> {
+  return window.api.openFolderDialog()
+}

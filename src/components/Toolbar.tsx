@@ -1,5 +1,6 @@
 import React from 'react';
 import { useStore, ViewMode } from '../store';
+import { version } from '../../package.json';
 
 const buttonStyle: React.CSSProperties = {
   padding: '0.25rem 0.75rem',
@@ -67,7 +68,7 @@ export function Toolbar() {
         Files
       </button>
 
-      <span style={{ fontWeight: 'bold' }}>QuickMD</span>
+      <span style={{ fontWeight: 'bold' }}>QuickMD <span style={{ fontWeight: 'normal', fontSize: '0.75rem', color: '#888' }}>v{version}</span></span>
       <span style={{ color: '#666' }}>
         {fileName}
         {isDirty ? ' *' : ''}

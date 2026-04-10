@@ -104,3 +104,10 @@ ipcMain.handle('save-file-dialog', async (_event, defaultPath?: string): Promise
 ipcMain.handle('store-get', (_event, key: string) => store.get(key))
 
 ipcMain.handle('store-set', (_event, key: string, value: unknown): void => store.set(key, value))
+
+ipcMain.handle('open-folder-dialog', async (): Promise<string | null> => {
+  const result = await dialog.showOpenDialog(win, {
+    properties: ['openDirectory'],
+  })
+  return result.canceled ? null : result.filePaths[0]
+})
