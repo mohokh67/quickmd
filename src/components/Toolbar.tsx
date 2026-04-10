@@ -1,3 +1,4 @@
+import React from 'react';
 import { open, save } from '@tauri-apps/plugin-dialog';
 import { useStore, ViewMode } from '../store';
 
@@ -11,18 +12,22 @@ const buttonStyle: React.CSSProperties = {
 
 export function Toolbar() {
   const {
-    viewMode, setViewMode,
-    theme, setTheme,
-    currentFilePath, isDirty,
-    openFile, saveFile, saveFileAs,
-    toggleSidebar, sidebarVisible
+    viewMode,
+    setViewMode,
+    theme,
+    setTheme,
+    currentFilePath,
+    isDirty,
+    openFile,
+    saveFile,
+    saveFileAs,
+    toggleSidebar,
+    sidebarVisible,
   } = useStore();
 
   const modes: ViewMode[] = ['editor', 'split', 'preview'];
 
-  const fileName = currentFilePath
-    ? currentFilePath.split('/').pop()
-    : 'Untitled';
+  const fileName = currentFilePath ? currentFilePath.split('/').pop() : 'Untitled';
 
   const handleOpen = async () => {
     const path = await open({
@@ -73,11 +78,16 @@ export function Toolbar() {
 
       <span style={{ fontWeight: 'bold' }}>QuickMD</span>
       <span style={{ color: '#666' }}>
-        {fileName}{isDirty ? ' *' : ''}
+        {fileName}
+        {isDirty ? ' *' : ''}
       </span>
 
-      <button onClick={handleOpen} style={buttonStyle}>Open</button>
-      <button onClick={handleSave} style={buttonStyle}>Save</button>
+      <button onClick={handleOpen} style={buttonStyle}>
+        Open
+      </button>
+      <button onClick={handleSave} style={buttonStyle}>
+        Save
+      </button>
 
       <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
         {modes.map((mode) => (
@@ -94,10 +104,7 @@ export function Toolbar() {
           </button>
         ))}
 
-        <button
-          onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-          style={buttonStyle}
-        >
+        <button onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')} style={buttonStyle}>
           {theme === 'light' ? 'Dark' : 'Light'}
         </button>
       </div>

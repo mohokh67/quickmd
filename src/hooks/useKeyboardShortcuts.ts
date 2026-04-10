@@ -4,8 +4,15 @@ import { useStore } from '../store';
 
 export function useKeyboardShortcuts() {
   const {
-    openFile, saveFile, saveFileAs, currentFilePath,
-    toggleSidebar, setViewMode, setTheme, theme, viewMode
+    openFile,
+    saveFile,
+    saveFileAs,
+    currentFilePath,
+    toggleSidebar,
+    setViewMode,
+    setTheme,
+    theme,
+    viewMode,
   } = useStore();
 
   useEffect(() => {
@@ -24,7 +31,9 @@ export function useKeyboardShortcuts() {
 
       if (isMod && e.key === 'o') {
         e.preventDefault();
-        const path = await open({ filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }] });
+        const path = await open({
+          filters: [{ name: 'Markdown', extensions: ['md', 'markdown'] }],
+        });
         if (path && typeof path === 'string') await openFile(path);
       }
 
@@ -51,5 +60,15 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [openFile, saveFile, saveFileAs, currentFilePath, toggleSidebar, setViewMode, setTheme, theme, viewMode]);
+  }, [
+    openFile,
+    saveFile,
+    saveFileAs,
+    currentFilePath,
+    toggleSidebar,
+    setViewMode,
+    setTheme,
+    theme,
+    viewMode,
+  ]);
 }

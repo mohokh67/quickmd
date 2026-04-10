@@ -4,7 +4,9 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
 }
@@ -48,7 +50,9 @@ html, body, #root {
   line-height: 1.6;
 }
 
-.preview h1, .preview h2, .preview h3 {
+.preview h1,
+.preview h2,
+.preview h3 {
   margin-top: 1rem;
   margin-bottom: 0.5rem;
 }
@@ -72,7 +76,8 @@ html, body, #root {
   margin: 1rem 0;
 }
 
-.preview th, .preview td {
+.preview th,
+.preview td {
   border: 1px solid var(--border);
   padding: 0.5rem;
 }

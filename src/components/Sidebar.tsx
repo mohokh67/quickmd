@@ -13,10 +13,6 @@ export function Sidebar() {
   const [subEntries, setSubEntries] = useState<{ [path: string]: FileEntry[] }>({});
   const { openFile, currentFilePath, sidebarVisible } = useStore();
 
-  useEffect(() => {
-    getHomeDir().then(loadDirectory).catch(console.error);
-  }, []);
-
   const loadDirectory = async (path: string) => {
     try {
       const files = await listDirectory(path);
@@ -26,6 +22,10 @@ export function Sidebar() {
       console.error('Failed to load directory:', e);
     }
   };
+
+  useEffect(() => {
+    getHomeDir().then(loadDirectory).catch(console.error);
+  }, []);
 
   const toggleFolder = async (path: string) => {
     if (expanded[path]) {
@@ -69,17 +69,19 @@ export function Sidebar() {
           }}
         >
           <span>{entry.is_dir ? (isExpanded ? 'v' : '>') : ' '}</span>
-          <span style={{
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}>
+          <span
+            style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {entry.name}
           </span>
         </div>
-        {entry.is_dir && isExpanded && subEntries[entry.path]?.map((sub) =>
-          renderEntry(sub, depth + 1)
-        )}
+        {entry.is_dir &&
+          isExpanded &&
+          subEntries[entry.path]?.map((sub) => renderEntry(sub, depth + 1))}
       </div>
     );
   };
@@ -93,7 +95,9 @@ export function Sidebar() {
         fontSize: '0.875rem',
       }}
     >
-      <div style={{ padding: '0.5rem', fontWeight: 'bold', borderBottom: '1px solid var(--border)' }}>
+      <div
+        style={{ padding: '0.5rem', fontWeight: 'bold', borderBottom: '1px solid var(--border)' }}
+      >
         {rootPath?.split('/').pop() || 'Files'}
       </div>
       {entries.map((entry) => renderEntry(entry))}
