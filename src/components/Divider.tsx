@@ -5,25 +5,28 @@ export function Divider() {
   const { setSplitRatio } = useStore();
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    const container = containerRef.current?.parentElement;
-    if (!container) return;
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const container = containerRef.current?.parentElement;
+      if (!container) return;
 
-    const onMouseMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      const ratio = (e.clientX - rect.left) / rect.width;
-      setSplitRatio(Math.max(0.2, Math.min(0.8, ratio)));
-    };
+      const onMouseMove = (e: MouseEvent) => {
+        const rect = container.getBoundingClientRect();
+        const ratio = (e.clientX - rect.left) / rect.width;
+        setSplitRatio(Math.max(0.2, Math.min(0.8, ratio)));
+      };
 
-    const onMouseUp = () => {
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
+      const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
 
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  }, [setSplitRatio]);
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    },
+    [setSplitRatio]
+  );
 
   return (
     <div
