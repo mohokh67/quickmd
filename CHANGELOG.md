@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/mohokh67/quickmd/compare/quickmd-v0.4.0...quickmd-v0.4.1) (2026-04-11)
+
+
+### Bug Fixes
+
+* **ci:** fix CI build publish error, missing Linux deb, and release-please label failure ([a60b202](https://github.com/mohokh67/quickmd/commit/a60b202e84667fd787e8afd8d36ca0da39f6a151))
+* **ci:** fix CI build, missing Linux deb, and release-please label failure ([4a7a0cf](https://github.com/mohokh67/quickmd/commit/4a7a0cf4d2ea9caba52f6788af5605a84b266e58))
+
 ## [0.4.0](https://github.com/mohokh67/quickmd/compare/quickmd-v0.3.1...quickmd-v0.4.0) (2026-04-10)
 
 
