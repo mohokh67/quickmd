@@ -62,7 +62,7 @@ jobs:
         run: npm ci
 
       - name: Build & package
-        run: npx electron-vite build && npx electron-builder ${{ matrix.args }}
+        run: npx electron-vite build && npx electron-builder ${{ matrix.args }} --publish never
 
       - name: Upload artifacts (macOS)
         if: runner.os == 'macOS'

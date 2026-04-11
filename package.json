@@ -5,6 +5,11 @@
   "description": "Cross-platform markdown editor with real-time preview",
   "author": "MoHo Khaleqi",
   "main": "dist-electron/main/index.js",
+  "build": {
+    "linux": {
+      "target": ["AppImage", "deb"]
+    }
+  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
