@@ -62,7 +62,7 @@ jobs:
         run: npm ci
 
       - name: Build & package
-        run: npx electron-vite build && npx electron-builder ${{ matrix.args }}
+        run: npx electron-vite build && npx electron-builder ${{ matrix.args }} --publish never
 
       - name: Upload artifacts (macOS)
         if: runner.os == 'macOS'
@@ -76,9 +76,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: quickmd-linux-x86_64
-          path: |
-            dist/*.AppImage
-            dist/*.deb
+          path: dist/*.AppImage
 
       - name: Upload artifacts (Windows)
         if: runner.os == 'Windows'
