@@ -76,9 +76,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: quickmd-linux-x86_64
-          path: |
-            dist/*.AppImage
-            dist/*.deb
+          path: dist/*.AppImage
 
       - name: Upload artifacts (Windows)
         if: runner.os == 'Windows'

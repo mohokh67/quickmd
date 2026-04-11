@@ -7,7 +7,7 @@
   "main": "dist-electron/main/index.js",
   "build": {
     "linux": {
-      "target": ["AppImage", "deb"]
+      "target": ["AppImage"]
     }
   },
   "scripts": {

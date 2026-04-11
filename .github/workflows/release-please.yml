@@ -70,7 +70,6 @@ jobs:
         run: |
           mkdir -p artifacts
           cp dist/*.AppImage "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}.AppImage"
-          cp dist/*.deb "artifacts/QuickMD_${{ needs.release-please.outputs.tag_name }}_${{ matrix.artifact-prefix }}.deb"
 
       - name: Stage artifacts (Windows)
         if: runner.os == 'Windows'
